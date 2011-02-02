@@ -1,11 +1,11 @@
 Websocket Android Plugin with Phonegap integration
-===============================
+---------------------------------------------------------------------
 
 This is a Java library that implements Websockt API (Draft-75/76) for Android platform. Library uses java.nio.* packages for
-efficinet non-blocking evented behavior. 
+efficinet non-blocking evented behavior. It easily gets integrated with Phonegap framework.
 
 Usage (native Android)
-==============
+------------------------------
 
 1. Copy Java source into your source folder.
 2. Create a class, say WebSocket extending WebSocketListener (refer: com.strumsoft.websocket.WebSocket)
@@ -16,7 +16,7 @@ Usage (native Android)
 	4. onReconnect (WebSocketListener will try to reconnect to the server in case of connection failure)
 	 
 Usage (Phonegap)
-===========
+-----------------------
 
 1. Copy Java source into your source folder.
 2. Copy websocket.js in your assets/www/js folder
