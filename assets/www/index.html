@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>websocket-android-phonegap</title>
+	<script type="text/javascript" charset="utf-8" src="js/phonegap.js"></script>
+	<script type="text/javascript" charset="utf-8" src="js/websocket.js"></script>
+  </head>
+  <body>
+  WebSocket test page!
+  <pre>
+[code]
+// new socket
+var socket = new WebSocket('ws://192.168.1.153:8081');
+ 
+// push a message after the connection is established.
+socket.onopen = function() {
+ socket.send('{ "type": "join", "game_id": "game/6"}')
+};
+
+// alerts message pushed from server
+socket.onmessage = function(msg) {
+ alert(JSON.stringify(msg));
+};
+
+// alert close event
+socket.onclose = function() {
+ alert('closed');
+};
+
+// now, close the connection after 10 secons. (funny!)
+setInterval(function() {
+ socket.close();
+}, 10000);  
+[/code]
+  </pre>
+  </body>
+  
+<script type="text/javascript" charset="utf-8">
+	// new socket
+	var socket = new WebSocket('ws://122.168.196.27:8081/');
+			
+	// push a message after the connection is established.
+	socket.onopen = function() {
+		socket.send('{ "type": "join", "game_id": "game/6"}')
+	};
+			
+	// alerts message pushed from server
+	socket.onmessage = function(msg) {
+		alert(JSON.stringify(msg));
+	};
+			
+	// alert close event
+	socket.onclose = function() {
+		alert('closed');
+	};
+			
+	// now, close the connection after 10 secons. (funny!)
+	setInterval(function() {
+		socket.close();
+	}, 10000);
+</script>  
+  
+</html>
