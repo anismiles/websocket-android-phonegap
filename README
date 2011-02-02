@@ -25,7 +25,7 @@ Usage (Phonegap)
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		super.loadUrl("file:///android_asset/www/index.html");
+		super.loadUrl(" file:///android_asset/www/index.html ");
 
 		// attach websocket factory
 		appView.addJavascriptInterface(new WebSocketFactory(appView), "WebSocketFactory");
@@ -50,8 +50,3 @@ Usage (Phonegap)
 	socket.onclose = function() {
 	 alert('closed');
 	};
-
-	// now, close the connection after 10 secons. (funny!)
-	setInterval(function() {
-	 socket.close();
-	}, 10000);  
