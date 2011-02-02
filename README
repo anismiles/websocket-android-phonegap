@@ -20,7 +20,7 @@ Usage (Phonegap)
 
 1. Copy Java source into your source folder.
 2. Copy websocket.js in your assets/www/js folder
-3. Attache com.strumsoft.websocket.phonegap.WebSocketFactory to WebView, like this:
+3. Attach com.strumsoft.websocket.phonegap.WebSocketFactory to WebView, like this:
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
