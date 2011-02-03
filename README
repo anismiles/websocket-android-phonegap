@@ -2,7 +2,7 @@ Websocket Android Plugin with Phonegap integration
 --------------------------------------------------
 
 This is a Java library that implements Websockt API (Draft-75/76) for Android platform. Library uses java.nio.* packages for
-efficinet non-blocking evented behavior. It easily gets integrated with Phonegap framework.
+efficient non-blocking evented behavior. It easily gets integrated with Phonegap framework too.
 
 Usage (native Android)
 ----------------------
@@ -50,3 +50,6 @@ Usage (Phonegap)
 	socket.onclose = function() {
 	 alert('closed');
 	};
+
+
+ps: It doesn't support 'onerror' event, and various states as defined by WebSocket APIs yet. I am working on it. By the way, if you like the project, join the force. 
