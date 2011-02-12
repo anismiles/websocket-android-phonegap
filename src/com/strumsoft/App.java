@@ -28,28 +28,19 @@ package com.strumsoft;
 import android.os.Bundle;
 
 import com.phonegap.DroidGap;
-import com.strumsoft.util.Logger;
 import com.strumsoft.websocket.phonegap.WebSocketFactory;
 
 /**
  * The Class App.
  */
 public class App extends DroidGap {
-	
-    /**
-     * Called when the activity is first created.
-     *
-     * @param savedInstanceState the saved instance state
-     */
-    @Override
+
+	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.loadUrl("file:///android_asset/www/index.html");
         
-        // attach logger
-        appView.addJavascriptInterface(Logger.class, "Logger");
         // attach websocket factory
         appView.addJavascriptInterface(new WebSocketFactory(appView), "WebSocketFactory");
     }
-
 }
