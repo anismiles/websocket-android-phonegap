@@ -461,12 +461,25 @@ public class WebSocket implements Runnable {
 			request += "Sec-WebSocket-Key2: " + this._randomKey() + "\r\n";
 			this.key3 = new byte[8];
 			(new Random()).nextBytes(this.key3);
+			
+			//Convert to bytes early so last eight bytes don't get jacked
+			byte[] bRequest = request.getBytes(UTF8_CHARSET);
+			
+			byte[] bToSend  = new byte[ bRequest.length + 8];
+						
+			//Copy in the Request bytes
+			System.arraycopy(bRequest,0,bToSend,0,bRequest.length);
+
+			//Now tack on key3 bytes
+			System.arraycopy(this.key3, 0, bToSend, bRequest.length, this.key3.length);
+			
+			//Now we can send all keys as a single frame
+			_write(bToSend);
+			return;
 		}
 
 		request += "\r\n";
 		_write(request.getBytes(UTF8_CHARSET));
-		if (this.key3 != null) {
-			_write(this.key3);
 		}
 
 	}
