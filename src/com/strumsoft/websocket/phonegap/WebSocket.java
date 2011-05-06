@@ -480,8 +480,6 @@ public class WebSocket implements Runnable {
 
 		request += "\r\n";
 		_write(request.getBytes(UTF8_CHARSET));
-		}
-
 	}
 
 	private boolean _write() throws IOException {
