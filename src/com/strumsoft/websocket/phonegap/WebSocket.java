@@ -459,6 +459,7 @@ public class WebSocket implements Runnable {
 		if (this.draft == Draft.DRAFT76) {
 			request += "Sec-WebSocket-Key1: " + this._randomKey() + "\r\n";
 			request += "Sec-WebSocket-Key2: " + this._randomKey() + "\r\n";
+			request += "\r\n";
 			this.key3 = new byte[8];
 			(new Random()).nextBytes(this.key3);
 			
