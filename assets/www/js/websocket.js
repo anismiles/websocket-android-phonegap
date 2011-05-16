@@ -25,14 +25,27 @@
  *  
  */
 (function() {
-
-var Base64 = {
- 
+	
+	// window object
+	var global = window;
+	
+	// WebSocket Object. All listener methods are cleaned up!
+	var WebSocket = global.WebSocket = function(url) {
+		// get a new websocket object from factory (check com.strumsoft.websocket.WebSocketFactory.java)
+		this.socket = WebSocketFactory.getInstance(url);
+		// store in registry
+		if(this.socket) {
+			WebSocket.store[this.socket.getId()] = this;
+		} else {
+			throw new Error('websocket instantiation failed! Address could be wrong.');
+		}
+	};
+	
 	// private property
-	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+	WebSocket._keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
  
-	// public method for decoding
-	decode : function (input) {
+	// private method for decoding base64
+	WebSocket._decode = function (input) {
 		var output = "";
 		var chr1, chr2, chr3;
 		var enc1, enc2, enc3, enc4;
@@ -62,14 +75,14 @@ var Base64 = {
  
 		}
  
-		output = Base64._utf8_decode(output);
+		output = this._utf8_decode(output);
  
 		return output;
  
-	},
+	}
  
 	// private method for UTF-8 decoding
-	_utf8_decode : function (utftext) {
+	WebSocket._utf8_decode = function (utftext) {
 		var string = "";
 		var i = 0;
 		var c = c1 = c2 = 0;
@@ -98,30 +111,13 @@ var Base64 = {
  
 		return string;
 	}
- 
-}
-	
-	// window object
-	var global = window;
-	
-	// WebSocket Object. All listener methods are cleaned up!
-	var WebSocket = global.WebSocket = function(url) {
-		// get a new websocket object from factory (check com.strumsoft.websocket.WebSocketFactory.java)
-		this.socket = WebSocketFactory.getInstance(url);
-		// store in registry
-		if(this.socket) {
-			WebSocket.store[this.socket.getId()] = this;
-		} else {
-			throw new Error('websocket instantiation failed! Address could be wrong.');
-		}
-	};
 	
 	// storage to hold websocket object for later invokation of event methods
 	WebSocket.store = {};
 	
 	// static event methods to call event methods on target websocket objects
 	WebSocket.onmessage = function (evt) {
-		WebSocket.store[evt._target]['onmessage'].call(global, evt._data);
+		WebSocket.store[evt._target]['onmessage'].call(global, this._decode(evt._data));
 	}	
 	
 	WebSocket.onopen = function (evt) {
