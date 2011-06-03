@@ -282,6 +282,7 @@ public class WebSocket implements Runnable {
 			try {
 				_connect();
 			} catch (IOException e) {
+				e.printStackTrace();
 				this.onError(e);
 			} 
 		}
@@ -321,7 +322,7 @@ public class WebSocket implements Runnable {
 			} else {
 				this.onError(new NotYetConnectedException());
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			this.onError(e);
 		}
 	}
@@ -333,21 +334,41 @@ public class WebSocket implements Runnable {
 	 *            Message from websocket server
 	 */
 	public void onMessage(String msg) {
+		final String data = msg;
 		Log.v("websocket", "Received a message: " + msg);
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
+		appView.post(new Runnable() {
+	        public void run() {
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, data));
+	        }
+	    });
 	}
 
 	public void onOpen() {
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
+		Log.v("websocket", "Connected!");
+		appView.post(new Runnable() {
+	        public void run() {
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, BLANK_MESSAGE));
+	        }
+	    });
 	}
 
 	public void onClose() {
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
+		appView.post(new Runnable() {
+	        public void run() {
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, BLANK_MESSAGE));
+	        }
+	    });
 	}
 
 	public void onError(Throwable t) {
-		String msg = t.getMessage();
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
+		final String msg = t.getMessage();
+		Log.v("websocket", "Error: " + msg);
+		t.printStackTrace();
+		appView.post(new Runnable() {
+	        public void run() {
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
+	        }
+	    });
 	}
 
 	public String getId() {
@@ -372,11 +393,12 @@ public class WebSocket implements Runnable {
 	 * @return
 	 */
 	private String buildJavaScriptData(String event, String msg) {
-		String b64EncodedMsg;
+		String b64EncodedMsg = "Error!";
 		try{
-			b64EncodedMsg = Base64.encodeBytes(msg.getBytes(UTF8_CHARSET));
+			if(msg != null) {
+				b64EncodedMsg = Base64.encodeBytes(msg.getBytes(UTF8_CHARSET));
+			}
 		} catch(Exception e) {
-			b64EncodedMsg = "Base64 Encoding Error!";
 			e.printStackTrace();
 		}
 		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\","
