@@ -347,7 +347,7 @@ public class WebSocket implements Runnable {
 		Log.v("websocket", "Connected!");
 		appView.post(new Runnable() {
 	        public void run() {
-	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, BLANK_MESSAGE));
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
 	        }
 	    });
 	}
@@ -355,7 +355,7 @@ public class WebSocket implements Runnable {
 	public void onClose() {
 		appView.post(new Runnable() {
 	        public void run() {
-	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, BLANK_MESSAGE));
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
 	        }
 	    });
 	}
@@ -366,7 +366,7 @@ public class WebSocket implements Runnable {
 		t.printStackTrace();
 		appView.post(new Runnable() {
 	        public void run() {
-	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
 	        }
 	    });
 	}
@@ -692,8 +692,13 @@ public class WebSocket implements Runnable {
 			key = new StringBuilder(key).insert(position, randChar).toString();
 		}
 		for (int i = 0; i < spaces; i++) {
-			int position = r.nextInt(key.length() - 1) + 1;
-			position = Math.abs(position);
+			int n = key.length() - 1;
+			int position;
+			if(n == 0) {
+				position = 1;
+			} else {
+				position = r.nextInt(n) + 1;
+			}
 			key = new StringBuilder(key).insert(position, "\u0020").toString();
 		}
 		return key;
