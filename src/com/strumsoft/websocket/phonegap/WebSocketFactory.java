@@ -24,7 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *  
  */
-package com.strumsoft.phonegap.websocket;
+package com.strumsoft.websocket.phonegap;
 
 import java.net.URI;
 import java.util.Random;

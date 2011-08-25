@@ -9,28 +9,24 @@
   WebSocket test page!
   <pre>
 [code]
-// new socket
-var socket = new WebSocket('ws://192.168.1.153:8081');
- 
-// push a message after the connection is established.
-socket.onopen = function() {
- socket.send('{ "type": "join", "game_id": "game/6"}')
-};
+	// new socket
+	var socket = new WebSocket('ws://122.168.196.27:8081/');
+			
+	// push a message after the connection is established.
+	socket.onopen = function() {
+		socket.send('Hello World')
+	};
+			
+	// alerts message pushed from server
+	socket.onmessage = function(msg) {
+		alert(JSON.stringify(msg));
+	};
+			
+	// alert close event
+	socket.onclose = function() {
+		alert('closed');
+	};
 
-// alerts message pushed from server
-socket.onmessage = function(msg) {
- alert(JSON.stringify(msg));
-};
-
-// alert close event
-socket.onclose = function() {
- alert('closed');
-};
-
-// now, close the connection after 10 secons. (funny!)
-setInterval(function() {
- socket.close();
-}, 10000);  
 [/code]
   </pre>
   </body>
@@ -41,7 +37,7 @@ setInterval(function() {
 			
 	// push a message after the connection is established.
 	socket.onopen = function() {
-		socket.send('{ "type": "join", "game_id": "game/6"}')
+		socket.send('Hello World')
 	};
 			
 	// alerts message pushed from server
@@ -55,9 +51,9 @@ setInterval(function() {
 	};
 			
 	// now, close the connection after 10 secons. (funny!)
-	setInterval(function() {
+/* 	setInterval(function() {
 		socket.close();
-	}, 10000);
+	}, 10000); */
 </script>  
   
 </html>

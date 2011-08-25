@@ -37,7 +37,7 @@
 		if(this.socket) {
 			WebSocket.store[this.socket.getId()] = this;
 		} else {
-			throw new Error('websocket instantiation failed! Address could be wrong.');
+			throw new Error('Websocket instantiation failed! Address might be wrong.');
 		}
 	};
 	
@@ -46,19 +46,19 @@
 	
 	// static event methods to call event methods on target websocket objects
 	WebSocket.onmessage = function (evt) {
-		WebSocket.store[evt._target]['onmessage'].call(global, evt._data);
+		WebSocket.store[evt._target]['onmessage'].call(global, evt);
 	}	
 	
 	WebSocket.onopen = function (evt) {
-		WebSocket.store[evt._target]['onopen'].call(global, evt._data);
+		WebSocket.store[evt._target]['onopen'].call(global, evt);
 	}
 	
 	WebSocket.onclose = function (evt) {
-		WebSocket.store[evt._target]['onclose'].call(global, evt._data);
+		WebSocket.store[evt._target]['onclose'].call(global, evt);
 	}
 	
 	WebSocket.onerror = function (evt) {
-		WebSocket.store[evt._target]['onerror'].call(global, evt._data);
+		WebSocket.store[evt._target]['onerror'].call(global, evt);
 	}
 
 	// instance event methods

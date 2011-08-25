@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2010 Nathan Rajlich (https://github.com/TooTallNate)
- * Copyright (c) 2010 Animesh Kumar  (https://github.com/anismiles)
- * Copyright (c) 2010 Strumsoft  (https://strumsoft.com)
- *  
+ * Copyright (c) 2010 Animesh Kumar (https://github.com/anismiles)
+ * Copyright (c) 2010 Strumsoft (https://strumsoft.com)
+ * 
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -11,10 +11,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- *  
+ * 
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- *  
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,9 +23,8 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
- *  
  */
-package com.strumsoft.phonegap.websocket;
+package com.strumsoft.websocket.phonegap;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -133,7 +132,7 @@ public class WebSocket implements Runnable {
 	/**
 	 * The WebView instance from Phonegap DroidGap
 	 */
-	private WebView appView;
+	private final WebView appView;
 	/**
 	 * The unique id for this instance (helps to bind this to javascript events)
 	 */
@@ -207,11 +206,12 @@ public class WebSocket implements Runnable {
 	 */
 	private int readyState = WEBSOCKET_STATE_CONNECTING;
 
+	private final WebSocket instance;
+
 	/**
 	 * Constructor.
 	 * 
-	 * Note: this is protected because it's supposed to be instantiated from
-	 * {@link WebSocketFactory} only.
+	 * Note: this is protected because it's supposed to be instantiated from {@link WebSocketFactory} only.
 	 * 
 	 * @param appView
 	 *            {@link android.webkit.WebView}
@@ -240,6 +240,8 @@ public class WebSocket implements Runnable {
 		this.handshakeComplete = false;
 		this.remoteHandshake = this.currentFrame = null;
 		this.buffer = ByteBuffer.allocate(1);
+
+		this.instance = this;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////////////
@@ -283,7 +285,7 @@ public class WebSocket implements Runnable {
 				_connect();
 			} catch (IOException e) {
 				this.onError(e);
-			} 
+			}
 		}
 	}
 
@@ -314,39 +316,64 @@ public class WebSocket implements Runnable {
 	 * @param text
 	 *            String to send to server
 	 */
-	public void send(String text) {
-		try {
-			if (this.readyState == WEBSOCKET_STATE_OPEN) {
-				_send(text);
-			} else {
-				this.onError(new NotYetConnectedException());
+	public void send(final String text) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (instance.readyState == WEBSOCKET_STATE_OPEN) {
+					try {
+						instance._send(text);
+					} catch (IOException e) {
+						instance.onError(e);
+					}
+				} else {
+					instance.onError(new NotYetConnectedException());
+				}
 			}
-		} catch (IOException e) {
-			this.onError(e);
-		}
+		}).start();
 	}
 
 	/**
-	 * Called when an entire text frame has been recieved.
+	 * Called when an entire text frame has been received.
 	 * 
 	 * @param msg
 	 *            Message from websocket server
 	 */
-	public void onMessage(String msg) {
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
+	public void onMessage(final String msg) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
+			}
+		}).start();
 	}
 
 	public void onOpen() {
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
+			}
+		}).start();
 	}
 
 	public void onClose() {
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
+			}
+		}).start();
 	}
 
 	public void onError(Throwable t) {
-		String msg = t.getMessage();
-		appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
+		final String msg = t.getMessage();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
+			}
+		}).start();
 	}
 
 	public String getId() {
@@ -371,8 +398,8 @@ public class WebSocket implements Runnable {
 	 * @return
 	 */
 	private String buildJavaScriptData(String event, String msg) {
-		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\","
-				+ "\"_data\":'" + msg + "'" + "}" + ")";
+		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\"," + "\"data\":'" + msg
+				+ "'" + "}" + ")";
 		return _d;
 	}
 
@@ -451,30 +478,29 @@ public class WebSocket implements Runnable {
 
 		String host = uri.getHost() + (port != DEFAULT_PORT ? ":" + port : "");
 		String origin = "*"; // TODO: Make 'origin' configurable
-		String request = "GET " + path + " HTTP/1.1\r\n" + "Upgrade: WebSocket\r\n"
-				+ "Connection: Upgrade\r\n" + "Host: " + host + "\r\n" + "Origin: " + origin
-				+ "\r\n";
+		String request = "GET " + path + " HTTP/1.1\r\n" + "Upgrade: WebSocket\r\n" + "Connection: Upgrade\r\n"
+				+ "Host: " + host + "\r\n" + "Origin: " + origin + "\r\n";
 
-		// Add randon keys for Draft76
+		// Add random keys for Draft76
 		if (this.draft == Draft.DRAFT76) {
 			request += "Sec-WebSocket-Key1: " + this._randomKey() + "\r\n";
 			request += "Sec-WebSocket-Key2: " + this._randomKey() + "\r\n";
 			request += "\r\n";
 			this.key3 = new byte[8];
 			(new Random()).nextBytes(this.key3);
-			
-			//Convert to bytes early so last eight bytes don't get jacked
-			byte[] bRequest = request.getBytes(UTF8_CHARSET);
-			
-			byte[] bToSend  = new byte[ bRequest.length + 8];
-						
-			//Copy in the Request bytes
-			System.arraycopy(bRequest,0,bToSend,0,bRequest.length);
 
-			//Now tack on key3 bytes
+			// Convert to bytes early so last eight bytes don't get jacked
+			byte[] bRequest = request.getBytes(UTF8_CHARSET);
+
+			byte[] bToSend = new byte[bRequest.length + 8];
+
+			// Copy in the Request bytes
+			System.arraycopy(bRequest, 0, bToSend, 0, bRequest.length);
+
+			// Now tack on key3 bytes
 			System.arraycopy(this.key3, 0, bToSend, bRequest.length, this.key3.length);
-			
-			//Now we can send all keys as a single frame
+
+			// Now we can send all keys as a single frame
 			_write(bToSend);
 			return;
 		}
@@ -543,8 +569,7 @@ public class WebSocket implements Runnable {
 			this.onMessage(textFrame);
 
 		} else { // Regular frame data, add to current frame buffer
-			ByteBuffer frame = ByteBuffer.allocate((this.currentFrame != null ? this.currentFrame
-					.capacity() : 0)
+			ByteBuffer frame = ByteBuffer.allocate((this.currentFrame != null ? this.currentFrame.capacity() : 0)
 					+ this.buffer.capacity());
 			if (this.currentFrame != null) {
 				this.currentFrame.rewind();
@@ -556,8 +581,7 @@ public class WebSocket implements Runnable {
 	}
 
 	private void _readHandshake() throws IOException, NoSuchAlgorithmException {
-		ByteBuffer ch = ByteBuffer.allocate((this.remoteHandshake != null ? this.remoteHandshake
-				.capacity() : 0)
+		ByteBuffer ch = ByteBuffer.allocate((this.remoteHandshake != null ? this.remoteHandshake.capacity() : 0)
 				+ this.buffer.capacity());
 		if (this.remoteHandshake != null) {
 			this.remoteHandshake.rewind();
@@ -571,11 +595,10 @@ public class WebSocket implements Runnable {
 		// handshake is complete for Draft 76 Client.
 		if ((h.length >= 20 && h[h.length - 20] == DATA_CR && h[h.length - 19] == DATA_LF
 				&& h[h.length - 18] == DATA_CR && h[h.length - 17] == DATA_LF)) {
-			_readHandshake(new byte[] { h[h.length - 16], h[h.length - 15], h[h.length - 14],
-					h[h.length - 13], h[h.length - 12], h[h.length - 11], h[h.length - 10],
-					h[h.length - 9], h[h.length - 8], h[h.length - 7], h[h.length - 6],
-					h[h.length - 5], h[h.length - 4], h[h.length - 3], h[h.length - 2],
-					h[h.length - 1] });
+			_readHandshake(new byte[] { h[h.length - 16], h[h.length - 15], h[h.length - 14], h[h.length - 13],
+					h[h.length - 12], h[h.length - 11], h[h.length - 10], h[h.length - 9], h[h.length - 8],
+					h[h.length - 7], h[h.length - 6], h[h.length - 5], h[h.length - 4], h[h.length - 3],
+					h[h.length - 2], h[h.length - 1] });
 
 			// If the ByteBuffer contains 8 random bytes,ends with
 			// 0x0D 0x0A 0x0D 0x0A (or two CRLFs), and the response
@@ -583,11 +606,9 @@ public class WebSocket implements Runnable {
 			// handshake is complete for Draft 76 Server.
 		} else if ((h.length >= 12 && h[h.length - 12] == DATA_CR && h[h.length - 11] == DATA_LF
 				&& h[h.length - 10] == DATA_CR && h[h.length - 9] == DATA_LF)
-				&& new String(this.remoteHandshake.array(), UTF8_CHARSET)
-						.contains("Sec-WebSocket-Key1")) {// ************************
-			_readHandshake(new byte[] { h[h.length - 8], h[h.length - 7], h[h.length - 6],
-					h[h.length - 5], h[h.length - 4], h[h.length - 3], h[h.length - 2],
-					h[h.length - 1] });
+				&& new String(this.remoteHandshake.array(), UTF8_CHARSET).contains("Sec-WebSocket-Key1")) {// ************************
+			_readHandshake(new byte[] { h[h.length - 8], h[h.length - 7], h[h.length - 6], h[h.length - 5],
+					h[h.length - 4], h[h.length - 3], h[h.length - 2], h[h.length - 1] });
 
 			// Consider Draft 75, and the Flash Security Policy
 			// Request edge-case.
@@ -612,12 +633,11 @@ public class WebSocket implements Runnable {
 			if (handShakeBody == null) {
 				isConnectionReady = true;
 			}
-			byte[] challenge = new byte[] { (byte) (this.number1 >> 24),
-					(byte) ((this.number1 << 8) >> 24), (byte) ((this.number1 << 16) >> 24),
-					(byte) ((this.number1 << 24) >> 24), (byte) (this.number2 >> 24),
-					(byte) ((this.number2 << 8) >> 24), (byte) ((this.number2 << 16) >> 24),
-					(byte) ((this.number2 << 24) >> 24), this.key3[0], this.key3[1], this.key3[2],
-					this.key3[3], this.key3[4], this.key3[5], this.key3[6], this.key3[7] };
+			byte[] challenge = new byte[] { (byte) (this.number1 >> 24), (byte) ((this.number1 << 8) >> 24),
+					(byte) ((this.number1 << 16) >> 24), (byte) ((this.number1 << 24) >> 24),
+					(byte) (this.number2 >> 24), (byte) ((this.number2 << 8) >> 24),
+					(byte) ((this.number2 << 16) >> 24), (byte) ((this.number2 << 24) >> 24), this.key3[0],
+					this.key3[1], this.key3[2], this.key3[3], this.key3[4], this.key3[5], this.key3[6], this.key3[7] };
 			MessageDigest md5 = MessageDigest.getInstance("MD5");
 			byte[] expected = md5.digest(challenge);
 			for (int i = 0; i < handShakeBody.length; i++) {
