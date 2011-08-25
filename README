@@ -46,7 +46,7 @@ Usage (Phonegap)
 
 	// alerts message pushed from server
 	socket.onmessage = function(msg) {
-	 alert(JSON.stringify(msg));
+	 alert(JSON.stringify(msg.data));
 	};
 
 	// alert close event
