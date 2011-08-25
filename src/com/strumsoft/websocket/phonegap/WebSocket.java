@@ -340,40 +340,39 @@ public class WebSocket implements Runnable {
 	 *            Message from websocket server
 	 */
 	public void onMessage(final String msg) {
-		new Thread(new Runnable() {
+		appView.post(new Runnable() {
 			@Override
 			public void run() {
 				appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
 			}
-		}).start();
+		});
 	}
 
 	public void onOpen() {
-		new Thread(new Runnable() {
+		appView.post(new Runnable() {
 			@Override
 			public void run() {
 				appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
 			}
-		}).start();
+		});
 	}
 
 	public void onClose() {
-		new Thread(new Runnable() {
+		appView.post(new Runnable() {
 			@Override
 			public void run() {
 				appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
 			}
-		}).start();
+		});
 	}
 
-	public void onError(Throwable t) {
-		final String msg = t.getMessage();
-		new Thread(new Runnable() {
+	public void onError(final Throwable t) {
+		appView.post(new Runnable() {
 			@Override
 			public void run() {
-				appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
+				appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, t.getMessage()));
 			}
-		}).start();
+		});
 	}
 
 	public String getId() {
