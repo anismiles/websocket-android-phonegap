@@ -44,7 +44,11 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import android.app.Activity;
+import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 
 /**
@@ -206,6 +210,10 @@ public class WebSocket implements Runnable {
 	 * The readyState attribute represents the state of the connection.
 	 */
 	private int readyState = WEBSOCKET_STATE_CONNECTING;
+	
+	private boolean keyboardIsShowing = false;
+	
+	private Handler handler = null;
 
 	/**
 	 * Constructor.
@@ -222,10 +230,11 @@ public class WebSocket implements Runnable {
 	 * @param id
 	 *            unique id for this instance
 	 */
-	protected WebSocket(WebView appView, URI uri, Draft draft, String id) {
+	protected WebSocket(Handler handler, WebView appView, URI uri, Draft draft, String id) {
 		this.appView = appView;
 		this.uri = uri;
 		this.draft = draft;
+		this.handler = handler;
 
 		// port
 		port = uri.getPort();
@@ -288,6 +297,11 @@ public class WebSocket implements Runnable {
 		}
 	}
 
+	
+	public void setKeyboardStatus(boolean status){
+		keyboardIsShowing = status;
+		Log.d("websocket", "keyboardIsShowing: "+keyboardIsShowing);
+	}
 	/**
 	 * Closes connection with server
 	 */
@@ -339,6 +353,9 @@ public class WebSocket implements Runnable {
 		appView.post(new Runnable() {
 	        public void run() {
 	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, data));
+	            if(keyboardIsShowing){
+	            	handler.sendEmptyMessage(3);
+	            }
 	        }
 	    });
 	}
@@ -348,6 +365,9 @@ public class WebSocket implements Runnable {
 		appView.post(new Runnable() {
 	        public void run() {
 	            appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
+	            if(keyboardIsShowing){
+	            	handler.sendEmptyMessage(3);
+	            }
 	        }
 	    });
 	}
@@ -356,6 +376,9 @@ public class WebSocket implements Runnable {
 		appView.post(new Runnable() {
 	        public void run() {
 	            appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
+	            if(keyboardIsShowing){
+	            	handler.sendEmptyMessage(3);
+	            }
 	        }
 	    });
 	}
@@ -367,6 +390,9 @@ public class WebSocket implements Runnable {
 		appView.post(new Runnable() {
 	        public void run() {
 	            appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
+	            if(keyboardIsShowing){
+	            	handler.sendEmptyMessage(3);
+	            }
 	        }
 	    });
 	}

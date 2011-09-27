@@ -28,7 +28,10 @@ package com.strumsoft.phonegap.websocket;
 
 import java.net.URI;
 import java.util.Random;
+import java.util.Vector;
 
+import android.app.Activity;
+import android.os.Handler;
 import android.webkit.WebView;
 
 /**
@@ -39,6 +42,10 @@ import android.webkit.WebView;
  * @author Animesh Kumar
  */
 public class WebSocketFactory {
+	
+	private Vector<WebSocket> socketList = new Vector<WebSocket>();
+	
+	private Handler handler;
 
 	/** The app view. */
 	WebView appView;
@@ -49,8 +56,13 @@ public class WebSocketFactory {
 	 * @param appView
 	 *            the app view
 	 */
-	public WebSocketFactory(WebView appView) {
+	public WebSocketFactory(Handler h, WebView appView) {
 		this.appView = appView;
+		this.handler = h;
+	}
+	
+	public Vector<WebSocket> getSocketList() {
+		return socketList;
 	}
 
 	public WebSocket getInstance(String url) {
@@ -62,7 +74,8 @@ public class WebSocketFactory {
 		WebSocket socket = null;
 		Thread th = null;
 		try {
-			socket = new WebSocket(appView, new URI(url), draft, getRandonUniqueId());
+			socket = new WebSocket(handler, appView, new URI(url), draft, getRandonUniqueId());
+			socketList.add(socket);
 			th = socket.connect();
 			return socket;
 		} catch (Exception e) {
