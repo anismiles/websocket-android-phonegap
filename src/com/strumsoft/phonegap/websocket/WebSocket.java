@@ -47,6 +47,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
@@ -352,9 +353,13 @@ public class WebSocket implements Runnable {
 		Log.v("websocket", "Received a message: " + msg);
 		appView.post(new Runnable() {
 	        public void run() {
-	            appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, data));
 	            if(keyboardIsShowing){
-	            	handler.sendEmptyMessage(3);
+	            	Message message = new Message();
+	            	message.obj = buildJavaScriptData(EVENT_ON_MESSAGE, data);
+	            	message.what = 3;
+	            	handler.sendMessage(message);
+	            } else {
+	            	appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, data));
 	            }
 	        }
 	    });
