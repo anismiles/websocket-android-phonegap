@@ -669,24 +669,26 @@ public class WebSocket implements Runnable {
 		this.handshakeComplete = true;
 		boolean isConnectionReady = true;
 
-		if (this.draft == WebSocket.Draft.DRAFT76) {
-			if (handShakeBody == null) {
-				isConnectionReady = true;
-			}
-			byte[] challenge = new byte[] { (byte) (this.number1 >> 24),
-					(byte) ((this.number1 << 8) >> 24), (byte) ((this.number1 << 16) >> 24),
-					(byte) ((this.number1 << 24) >> 24), (byte) (this.number2 >> 24),
-					(byte) ((this.number2 << 8) >> 24), (byte) ((this.number2 << 16) >> 24),
-					(byte) ((this.number2 << 24) >> 24), this.key3[0], this.key3[1], this.key3[2],
-					this.key3[3], this.key3[4], this.key3[5], this.key3[6], this.key3[7] };
-			MessageDigest md5 = MessageDigest.getInstance("MD5");
-			byte[] expected = md5.digest(challenge);
-			for (int i = 0; i < handShakeBody.length; i++) {
-				if (expected[i] != handShakeBody[i]) {
-					isConnectionReady = true;
-				}
-			}
-		}
+		//TODO: Figure out a better way to fix this.
+		//Commented because it was causing a NullPointerException and because the code didn't seem to affect isConnectionReady
+//		if (this.draft == WebSocket.Draft.DRAFT76) {
+//			if (handShakeBody == null) {
+//				isConnectionReady = true;
+//			}
+//			byte[] challenge = new byte[] { (byte) (this.number1 >> 24),
+//					(byte) ((this.number1 << 8) >> 24), (byte) ((this.number1 << 16) >> 24),
+//					(byte) ((this.number1 << 24) >> 24), (byte) (this.number2 >> 24),
+//					(byte) ((this.number2 << 8) >> 24), (byte) ((this.number2 << 16) >> 24),
+//					(byte) ((this.number2 << 24) >> 24), this.key3[0], this.key3[1], this.key3[2],
+//					this.key3[3], this.key3[4], this.key3[5], this.key3[6], this.key3[7] };
+//			MessageDigest md5 = MessageDigest.getInstance("MD5");
+//			byte[] expected = md5.digest(challenge);
+//			for (int i = 0; i < handShakeBody.length; i++) {
+//				if (expected[i] != handShakeBody[i]) {
+//					isConnectionReady = true;
+//				}
+//			}
+//		}
 
 		if (isConnectionReady) {
 			this.readyState = WEBSOCKET_STATE_OPEN;
