@@ -11,7 +11,7 @@ Usage (native Android)
 ----------------------
 
 1. Copy Java source into your source folder.
-2. Create a class, say WebSocket extending WebSocketListener (refer: com.strumsoft.websocket.WebSocket)
+2. Create a class, say WebSocketListener extending WebSocket (refer: com.strumsoft.websocket.WebSocket)
 3. Implement following methods
 	1. onOpen
 	2. onClose
