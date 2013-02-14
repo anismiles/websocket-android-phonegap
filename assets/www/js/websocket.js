@@ -51,18 +51,22 @@
 	
 	// static event methods to call event methods on target websocket objects
 	WebSocket.onmessage = function (evt) {
+		if (WebSocket.store[evt._target] == undefined) return;
 		WebSocket.store[evt._target]['onmessage'].call(global, evt);
 	}	
 	
 	WebSocket.onopen = function (evt) {
+		if (WebSocket.store[evt._target] == undefined) return;
 		WebSocket.store[evt._target]['onopen'].call(global, evt);
 	}
 	
 	WebSocket.onclose = function (evt) {
+		if (WebSocket.store[evt._target] == undefined) return;
 		WebSocket.store[evt._target]['onclose'].call(global, evt);
 	}
 	
 	WebSocket.onerror = function (evt) {
+		if (WebSocket.store[evt._target] == undefined) return;
 		WebSocket.store[evt._target]['onerror'].call(global, evt);
 	}
 
