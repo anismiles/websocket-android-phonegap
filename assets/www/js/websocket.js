@@ -25,6 +25,11 @@
  *  
  */
 (function() {
+
+	// do nothing out of phonegap
+	if (typeof WebSocketFactory === 'undefined') {
+		return;
+	}
 	
 	// window object
 	var global = window;
