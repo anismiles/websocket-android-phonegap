@@ -397,7 +397,7 @@ public class WebSocket implements Runnable {
 	 * @return
 	 */
 	private String buildJavaScriptData(String event, String msg) {
-		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\"," + "\"data\":'" + msg.replaceAll("'", "\\\\'")
+		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\"," + "\"data\":'" + msg.replaceAll("'", "\\\\'").replaceAll("\"", "\\\\\"")
 				+ "'" + "}" + ")";
 		return _d;
 	}
