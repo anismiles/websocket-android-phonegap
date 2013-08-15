@@ -399,7 +399,7 @@ public class WebSocket implements Runnable {
 	private String buildJavaScriptData(String event, String msg) {
 		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\"," + "\"data\":'" + msg.replaceAll("'", "\\\\'")
 				+ "'" + "}" + ")";
-		return _d;
+		return _d.replaceAll("\n", "\\\\n");
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////////////
@@ -473,6 +473,9 @@ public class WebSocket implements Runnable {
 		String path = this.uri.getPath();
 		if (path.indexOf("/") != 0) {
 			path = "/" + path;
+		}
+		if (uri.getRawQuery() != null) {
+			path += "?" + uri.getRawQuery();
 		}
 
 		String host = uri.getHost() + (port != DEFAULT_PORT ? ":" + port : "");
