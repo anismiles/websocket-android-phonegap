@@ -474,6 +474,9 @@ public class WebSocket implements Runnable {
 		if (path.indexOf("/") != 0) {
 			path = "/" + path;
 		}
+		if (uri.getRawQuery() != null) {
+			path += "?" + uri.getRawQuery();
+		}
 
 		String host = uri.getHost() + (port != DEFAULT_PORT ? ":" + port : "");
 		String origin = "*"; // TODO: Make 'origin' configurable
