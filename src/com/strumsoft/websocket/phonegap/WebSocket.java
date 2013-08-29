@@ -2,7 +2,7 @@
  * Copyright (c) 2010 Nathan Rajlich (https://github.com/TooTallNate)
  * Copyright (c) 2010 Animesh Kumar (https://github.com/anismiles)
  * Copyright (c) 2010 Strumsoft (https://strumsoft.com)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -11,10 +11,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -43,7 +43,12 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import android.app.Activity;
+import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 
 /**
@@ -53,7 +58,7 @@ import android.webkit.WebView;
  * <var>onOpen</var>, <var>onClose</var>, <var>onError</var> and
  * <var>onMessage</var>. An instance can send messages to the server via the
  * <var>send</var> method.
- * 
+ *
  * @author Animesh Kumar
  */
 public class WebSocket implements Runnable {
@@ -206,6 +211,10 @@ public class WebSocket implements Runnable {
 	 */
 	private int readyState = WEBSOCKET_STATE_CONNECTING;
 
+	private boolean keyboardIsShowing = false;
+
+	private Handler handler = null;
+
 	private final WebSocket instance;
 
 	private ByteBuffer bigBuffer = ByteBuffer.allocate(1024 * 500);
@@ -214,9 +223,9 @@ public class WebSocket implements Runnable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * Note: this is protected because it's supposed to be instantiated from {@link WebSocketFactory} only.
-	 * 
+	 *
 	 * @param appView
 	 *            {@link android.webkit.WebView}
 	 * @param uri
@@ -226,10 +235,11 @@ public class WebSocket implements Runnable {
 	 * @param id
 	 *            unique id for this instance
 	 */
-	protected WebSocket(WebView appView, URI uri, Draft draft, String id) {
+	protected WebSocket(Handler handler, WebView appView, URI uri, Draft draft, String id) {
 		this.appView = appView;
 		this.uri = uri;
 		this.draft = draft;
+		this.handler = handler;
 
 		// port
 		port = uri.getPort();
@@ -254,7 +264,7 @@ public class WebSocket implements Runnable {
 	// //////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * Starts a new Thread and connects to server
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public Thread connect() throws IOException {
@@ -288,11 +298,17 @@ public class WebSocket implements Runnable {
 			try {
 				_connect();
 			} catch (IOException e) {
+				e.printStackTrace();
 				this.onError(e);
 			}
 		}
 	}
 
+
+	public void setKeyboardStatus(boolean status){
+		keyboardIsShowing = status;
+		Log.d("websocket", "keyboardIsShowing: "+keyboardIsShowing);
+	}
 	/**
 	 * Closes connection with server
 	 */
@@ -316,7 +332,7 @@ public class WebSocket implements Runnable {
 
 	/**
 	 * Sends <var>text</var> to server
-	 * 
+	 *
 	 * @param text
 	 *            String to send to server
 	 */
@@ -327,7 +343,7 @@ public class WebSocket implements Runnable {
 				if (instance.readyState == WEBSOCKET_STATE_OPEN) {
 					try {
 						instance._send(text);
-					} catch (IOException e) {
+					} catch (Exception e) {
 						instance.onError(e);
 					}
 				} else {
@@ -339,44 +355,62 @@ public class WebSocket implements Runnable {
 
 	/**
 	 * Called when an entire text frame has been received.
-	 * 
+	 *
 	 * @param msg
 	 *            Message from websocket server
 	 */
-	public void onMessage(final String msg) {
+	public void onMessage(String msg) {
+		final String data = msg;
+		Log.v("websocket", "Received a message: " + msg);
 		appView.post(new Runnable() {
-			@Override
-			public void run() {
-				appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, msg));
-			}
-		});
+	        public void run() {
+	            if(keyboardIsShowing){
+	            	Message message = new Message();
+	            	message.obj = buildJavaScriptData(EVENT_ON_MESSAGE, data);
+	            	message.what = 3;
+	            	handler.sendMessage(message);
+	            } else {
+	            	appView.loadUrl(buildJavaScriptData(EVENT_ON_MESSAGE, data));
+	            }
+	        }
+	    });
 	}
 
 	public void onOpen() {
+		Log.v("websocket", "Connected!");
 		appView.post(new Runnable() {
-			@Override
-			public void run() {
-				appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
-			}
-		});
+	        public void run() {
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_OPEN, BLANK_MESSAGE));
+	            if(keyboardIsShowing){
+	            	handler.sendEmptyMessage(3);
+	            }
+	        }
+	    });
 	}
 
 	public void onClose() {
 		appView.post(new Runnable() {
-			@Override
-			public void run() {
-				appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
-			}
-		});
+	      public void run() {
+	          appView.loadUrl(buildJavaScriptData(EVENT_ON_CLOSE, BLANK_MESSAGE));
+	          if(keyboardIsShowing){
+	          	handler.sendEmptyMessage(3);
+	          }
+	      }
+    });
 	}
 
-	public void onError(final Throwable t) {
+	public void onError(Throwable t) {
+		final String msg = t.getMessage();
+		Log.v("websocket", "Error: " + msg);
+		t.printStackTrace();
 		appView.post(new Runnable() {
-			@Override
-			public void run() {
-				appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, t.getMessage()));
-			}
-		});
+	        public void run() {
+	            appView.loadUrl(buildJavaScriptData(EVENT_ON_ERROR, msg));
+	            if(keyboardIsShowing){
+	            	handler.sendEmptyMessage(3);
+	            }
+	        }
+	    });
 	}
 
 	public String getId() {
@@ -393,7 +427,7 @@ public class WebSocket implements Runnable {
 	/**
 	 * Builds text for javascript engine to invoke proper event method with
 	 * proper data.
-	 * 
+	 *
 	 * @param event
 	 *            websocket event (onOpen, onMessage etc.)
 	 * @param msg
@@ -401,8 +435,16 @@ public class WebSocket implements Runnable {
 	 * @return
 	 */
 	private String buildJavaScriptData(String event, String msg) {
-		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\"," + "\"data\":'" + msg.replaceAll("'", "\\\\'")
-				+ "'" + "}" + ")";
+		String b64EncodedMsg = "Error!";
+		try{
+			if(msg != null) {
+				b64EncodedMsg = Base64.encodeBytes(msg.getBytes(UTF8_CHARSET));
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		String _d = "javascript:WebSocket." + event + "(" + "{" + "\"_target\":\"" + id + "\","
+				+ "\"_data\":'" + b64EncodedMsg + "'" + "}" + ")";
 		return _d;
 	}
 
@@ -656,6 +698,7 @@ public class WebSocket implements Runnable {
 		this.handshakeComplete = true;
 		boolean isConnectionReady = true;
 
+		/* TODO: verify that this works. Was commented before due to null pointer exception */
 		if (this.draft == WebSocket.Draft.DRAFT76) {
 			if (handShakeBody == null) {
 				isConnectionReady = true;
@@ -673,6 +716,7 @@ public class WebSocket implements Runnable {
 				}
 			}
 		}
+		/* END */
 
 		if (isConnectionReady) {
 			this.readyState = WEBSOCKET_STATE_OPEN;
@@ -709,8 +753,13 @@ public class WebSocket implements Runnable {
 			key = new StringBuilder(key).insert(position, randChar).toString();
 		}
 		for (int i = 0; i < spaces; i++) {
-			int position = r.nextInt(key.length() - 1) + 1;
-			position = Math.abs(position);
+			int n = key.length() - 1;
+			int position;
+			if(n == 0) {
+				position = 1;
+			} else {
+				position = r.nextInt(n) + 1;
+			}
 			key = new StringBuilder(key).insert(position, "\u0020").toString();
 		}
 		return key;
