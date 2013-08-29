@@ -208,6 +208,10 @@ public class WebSocket implements Runnable {
 
 	private final WebSocket instance;
 
+	private ByteBuffer bigBuffer = ByteBuffer.allocate(1024 * 500);
+	private byte[] tokenByteBuffer = new byte[1024 * 500];
+	private int tokenByteBufferCounter = 0;
+
 	/**
 	 * Constructor.
 	 * 
@@ -530,52 +534,76 @@ public class WebSocket implements Runnable {
 	}
 
 	private void _read() throws IOException, NoSuchAlgorithmException {
-		this.buffer.rewind();
-
 		int bytesRead = -1;
 		try {
-			bytesRead = this.socketChannel.read(this.buffer);
+			if (!handshakeComplete) {
+				buffer.rewind();
+				bytesRead = socketChannel.read(this.buffer);
+				buffer.rewind();
+			} else {
+				bigBuffer.rewind();
+				bytesRead = socketChannel.read(this.bigBuffer);
+				bigBuffer.rewind();
+			}
+
 		} catch (Exception ex) {
+			Log.v("websocket", "Could not read data from socket channel, ex=" + ex.toString());
 		}
 
 		if (bytesRead == -1) {
+			Log.v("websocket", "All Bytes readed");
 			close();
 		} else if (bytesRead > 0) {
-			this.buffer.rewind();
-
 			if (!this.handshakeComplete) {
 				_readHandshake();
 			} else {
-				_readFrame();
+				_readFrame(bytesRead);
 			}
 		}
 	}
 
-	private void _readFrame() throws UnsupportedEncodingException {
-		byte newestByte = this.buffer.get();
+	private void _readFrame(int bytesRead) throws UnsupportedEncodingException {
+		byte[] data = bigBuffer.array();
 
-		if (newestByte == DATA_START_OF_FRAME) { // Beginning of Frame
-			this.currentFrame = null;
+		int length = bytesRead;
+		if (length > 2000) length = 2000;
 
-		} else if (newestByte == DATA_END_OF_FRAME) { // End of Frame
-			String textFrame = null;
-			// currentFrame will be null if END_OF_FRAME was send directly after
-			// START_OF_FRAME, thus we will send 'null' as the sent message.
-			if (this.currentFrame != null) {
-				textFrame = new String(this.currentFrame.array(), UTF8_CHARSET.toString());
-			}
-			// fire onMessage method
-			this.onMessage(textFrame);
+		Log.v("websocket", "_readFrame - bytesRead: " + bytesRead + ", data: " + new String(data, 0, length));
 
-		} else { // Regular frame data, add to current frame buffer
-			ByteBuffer frame = ByteBuffer.allocate((this.currentFrame != null ? this.currentFrame.capacity() : 0)
-					+ this.buffer.capacity());
-			if (this.currentFrame != null) {
-				this.currentFrame.rewind();
-				frame.put(this.currentFrame);
-			}
-			frame.put(newestByte);
-			this.currentFrame = frame;
+		// Get tokens
+		for (int i=0; i < bytesRead; i++) {
+
+			byte readByte = data[i];
+
+			// Token message is finished
+			if (readByte == DATA_END_OF_FRAME) {
+
+				// Make token public
+				this.onMessage(new String(tokenByteBuffer, 0, tokenByteBufferCounter));
+
+				// Reset counter for byte buffer
+				tokenByteBufferCounter = 0;
+
+			// Bytes to read as token message, skip start frame byte
+			} else if (readByte != DATA_START_OF_FRAME) {
+				tokenByteBufferCounter++;
+
+				// Array is out of bounds, make it greater
+				if (tokenByteBufferCounter == tokenByteBuffer.length) {
+
+					byte[] newTokenByteBuffer = new byte[tokenByteBuffer.length*2];
+
+					Log.v("websocket", "expand token byte buffer, new size=" + newTokenByteBuffer.length);
+
+					// Copy old data
+					for (int i2=0; i2<tokenByteBuffer.length; i2++) {
+						newTokenByteBuffer[i2] = tokenByteBuffer[i2];
+					}
+
+					tokenByteBuffer = newTokenByteBuffer;
+				}
+
+				tokenByteBuffer[tokenByteBufferCounter-1] = readByte;
 		}
 	}
 
