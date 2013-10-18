@@ -646,6 +646,7 @@ public class WebSocket implements Runnable {
 				}
 
 				tokenByteBuffer[tokenByteBufferCounter-1] = readByte;
+			}
 		}
 	}
 
