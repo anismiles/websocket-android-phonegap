@@ -145,7 +145,7 @@
  * @author rob@iharder.net
  * @version 2.3.7
  */
-package com.strumsoft.phonegap.websocket;
+package com.strumsoft.websocket.phonegap;
 
 public class Base64
 {
