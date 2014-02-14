@@ -56,7 +56,7 @@
 
 	if (typeof window.atob === 'function') {
 		WebSocket._decode = function (data) {
-			return window.atob(data)
+			return window.decodeURIComponent(window.escape(window.atob(data)));
 		};
 	} else {
 		WebSocket._keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
